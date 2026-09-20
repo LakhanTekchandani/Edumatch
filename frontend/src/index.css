@@ -1,0 +1,287 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "tailwindcss";
+
+/* ============================================================
+   EDUMATCH — TWEAKCN "WHATSAPP" THEME
+   Creator: Elvin Ega | Style: Dashboard / Professional / Warm
+   ============================================================ */
+@layer base {
+  :root {
+    /* === LIGHT MODE TOKENS (WhatsApp Warm Dashboard Theme) === */
+    --background: #fafaf7;
+    --foreground: #0f1a0f;
+    --card: #ffffff;
+    --card-foreground: #0f1a0f;
+    --popover: #ffffff;
+    --popover-foreground: #0f1a0f;
+
+    /* Primary: WhatsApp Green & Dark Teal */
+    --primary: #25D366;
+    --primary-foreground: #ffffff;
+    --primary-hover: #1ebd5a;
+    --primary-dark: #128C7E;
+    --primary-deep: #075E54;
+    --primary-glow: rgba(37, 211, 102, 0.2);
+
+    /* Secondary / Warm Greys */
+    --secondary: #f3f3ef;
+    --secondary-foreground: #2d4a2d;
+    --muted: #ebebeb;
+    --muted-foreground: #737373;
+
+    /* Accent: Soft Green */
+    --accent: #d4f0e1;
+    --accent-foreground: #1a7a45;
+
+    /* States */
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #e3e3df;
+    --input: #e3e3df;
+    --ring: #25D366;
+    --radius: 0.5rem;
+
+    /* Font stack */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .dark {
+    --background: #0d1a12;
+    --foreground: #f0faf3;
+    --card: #132419;
+    --card-foreground: #f0faf3;
+    --popover: #132419;
+    --popover-foreground: #f0faf3;
+    --primary: #25D366;
+    --primary-foreground: #075E54;
+    --secondary: #1b3022;
+    --secondary-foreground: #d4f0e1;
+    --muted: #172a1e;
+    --muted-foreground: #8aa694;
+    --accent: #1e3827;
+    --accent-foreground: #7ee2a8;
+    --border: #223f2d;
+    --input: #223f2d;
+    --ring: #25D366;
+  }
+}
+
+/* ============================================================
+   GLOBAL RESET & BASE STYLES
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: #fafaf7;
+  color: #0f1a0f;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Text selection with WhatsApp green tint */
+::selection {
+  background-color: rgba(37, 211, 102, 0.25);
+  color: #075E54;
+}
+
+/* ============================================================
+   CUSTOM SCROLLBARS (Warm / WhatsApp Green Theme)
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #fafaf7;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4d4ce;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #25D366;
+}
+
+/* ============================================================
+   TYPOGRAPHY ENHANCEMENTS
+   ============================================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: #0f1a0f;
+}
+
+/* ============================================================
+   UTILITY CLASSES — EduMatch WhatsApp Theme Design System
+   ============================================================ */
+
+/* Clean Card (Light mode elevation with crisp warm border) */
+.glass-card {
+  background: #ffffff;
+  border: 1px solid #e3e3df;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* WhatsApp Green Glow Effect */
+.green-glow, .blue-glow {
+  box-shadow: 0 0 25px rgba(37, 211, 102, 0.2), 0 0 50px rgba(18, 140, 126, 0.08);
+}
+
+/* WhatsApp Gradient Text */
+.gradient-text-green, .gradient-text-blue, .gradient-text-electric {
+  background: linear-gradient(135deg, #128C7E, #25D366, #075E54);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle Warm Grid Background Pattern */
+.grid-bg {
+  background-image: linear-gradient(rgba(18, 140, 126, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 140, 126, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ============================================================
+   ANIMATION UTILITIES
+   ============================================================ */
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.35); }
+  50% { box-shadow: 0 0 0 8px rgba(37, 211, 102, 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f3f3ef 25%, #e3e3df 50%, #f3f3ef 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ============================================================
+   FORM INPUT STYLING (Warm light inputs)
+   ============================================================ */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
+  background-color: #ffffff;
+  border: 1px solid #e3e3df;
+  border-radius: 0.5rem;
+  color: #0f1a0f;
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 0.625rem 0.875rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  width: 100%;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #25D366;
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8c8c87;
+}
+
+select option {
+  background-color: #ffffff;
+  color: #0f1a0f;
+}
+
+/* ============================================================
+   BUTTON BASE STYLES
+   ============================================================ */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid #25D366;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   LINK STYLES
+   ============================================================ */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+/* ============================================================
+   STAR RATING OVERRIDES
+   ============================================================ */
+.star-filled {
+  color: #eab308;
+}
+
+.star-empty {
+  color: #e3e3df;
+}
