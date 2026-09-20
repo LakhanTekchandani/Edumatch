@@ -107,7 +107,7 @@ const SCROLL = { sensitivity: 0.005, lerp: 5 } as const
 
 const SPIN_AT_FIFTY = 0.4
 
-const CAMERA_FOV_DEG = 30
+const CAMERA_FOV_DEG = 32
 
 const CAMERA_DISTANCE = 5
 
@@ -1279,7 +1279,7 @@ export interface XylophoneHelixProps {
 }
 
 export const METAL_DEFAULTS: Required<MetalProps> = {
-    reflect: 85,
+    reflect: 100,
     polish: 100,
 }
 
