@@ -291,6 +291,91 @@ export class EduMatchApiService {
     return true;
   }
 
+  async getReviewsByStudent(studentEmail: string): Promise<Review[]> {
+    return this.reviews.filter((r) => r.studentId === studentEmail);
+  }
+
+  async editReview(
+    reviewId: string,
+    updates: {
+      overallRating: number;
+      dimensions: DimensionRatings;
+      writtenReview: string;
+    }
+  ): Promise<Review | null> {
+    const rev = this.reviews.find((r) => r.id === reviewId);
+    if (!rev) return null;
+
+    rev.overallRating = updates.overallRating;
+    rev.dimensions = updates.dimensions;
+    rev.writtenReview = updates.writtenReview;
+    rev.createdAt = new Date().toISOString(); // update timestamp on edit
+
+    saveStored(STORAGE_REVIEWS, this.reviews);
+
+    // Recalculate institute ratings
+    this._recalcInstituteRating(rev.instituteId);
+
+    return rev;
+  }
+
+  async deleteReview(reviewId: string): Promise<boolean> {
+    const rev = this.reviews.find((r) => r.id === reviewId);
+    if (!rev) return false;
+
+    const instituteId = rev.instituteId;
+    this.reviews = this.reviews.filter((r) => r.id !== reviewId);
+    saveStored(STORAGE_REVIEWS, this.reviews);
+
+    // Recalculate institute ratings after deletion
+    this._recalcInstituteRating(instituteId);
+
+    return true;
+  }
+
+  private _recalcInstituteRating(instituteId: string): void {
+    const inst = this.institutes.find((i) => i.id === instituteId);
+    if (!inst) return;
+
+    const instReviews = this.reviews.filter((r) => r.instituteId === instituteId);
+    inst.reviewCount = instReviews.length;
+
+    if (instReviews.length === 0) {
+      inst.overallRating = null;
+      inst.dimensionAverages = null;
+    } else {
+      const sumRating = instReviews.reduce((acc, r) => acc + r.overallRating, 0);
+      inst.overallRating = parseFloat((sumRating / instReviews.length).toFixed(1));
+
+      const dimSum: DimensionRatings = {
+        facultyQuality: 0,
+        studyMaterial: 0,
+        doubtSupport: 0,
+        feeTransparency: 0,
+        batchManagement: 0,
+        valueForMoney: 0
+      };
+      instReviews.forEach((r) => {
+        dimSum.facultyQuality += r.dimensions.facultyQuality;
+        dimSum.studyMaterial += r.dimensions.studyMaterial;
+        dimSum.doubtSupport += r.dimensions.doubtSupport;
+        dimSum.feeTransparency += r.dimensions.feeTransparency;
+        dimSum.batchManagement += r.dimensions.batchManagement;
+        dimSum.valueForMoney += r.dimensions.valueForMoney;
+      });
+      inst.dimensionAverages = {
+        facultyQuality: parseFloat((dimSum.facultyQuality / instReviews.length).toFixed(1)),
+        studyMaterial: parseFloat((dimSum.studyMaterial / instReviews.length).toFixed(1)),
+        doubtSupport: parseFloat((dimSum.doubtSupport / instReviews.length).toFixed(1)),
+        feeTransparency: parseFloat((dimSum.feeTransparency / instReviews.length).toFixed(1)),
+        batchManagement: parseFloat((dimSum.batchManagement / instReviews.length).toFixed(1)),
+        valueForMoney: parseFloat((dimSum.valueForMoney / instReviews.length).toFixed(1))
+      };
+    }
+
+    saveStored(STORAGE_INSTITUTES, this.institutes);
+  }
+
   // --- INSTITUTE DASHBOARD APIS ---
   async getStudentAssociations(instituteId: string): Promise<StudentAssociation[]> {
     return this.associations.filter((a) => a.instituteId === instituteId);

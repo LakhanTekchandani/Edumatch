@@ -34,8 +34,7 @@ export const StudentDashboard: React.FC = () => {
     setShortlistedInsts(filteredShortlist);
 
     if (user?.email) {
-      const allRevs = await api.getReviewsForInstitute('inst-1');
-      const userRevs = allRevs.filter((r) => r.studentId === user.email);
+      const userRevs = await api.getReviewsByStudent(user.email);
       setMyReviews(userRevs);
     }
     setLoading(false);

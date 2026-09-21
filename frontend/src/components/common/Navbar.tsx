@@ -17,10 +17,9 @@ import {
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
-  const { user, role, isAuthenticated, logout, switchRole } = useAuth();
+  const { user, role, isAuthenticated, logout } = useAuth();
   const { shortlist, compareList } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -54,79 +53,12 @@ export const Navbar: React.FC = () => {
                 </span>
               </div>
             </Link>
-
-            {/* Role Demo Switcher Pill */}
-            <div className="relative hidden md:block ml-4">
-              <button
-                onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full bg-[#f3f3ef] border border-[#e3e3df] text-[#2d4a2d] hover:text-[#0f1a0f] hover:bg-[#ebebeb] transition-colors"
-                title="Switch view mode to test different role interfaces"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#25D366] animate-pulse" />
-                Role: <span className="text-[#128C7E] font-semibold capitalize">{role}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#737373]" />
-              </button>
-
-              {roleDropdownOpen && (
-                <div
-                  className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#e3e3df] rounded-xl shadow-xl py-2 z-50 text-xs"
-                  onMouseLeave={() => setRoleDropdownOpen(false)}
-                >
-                  <div className="px-3 py-1.5 font-semibold text-[#737373] uppercase tracking-wider text-[10px]">
-                    Test View Roles
-                  </div>
-                  <button
-                    onClick={() => { switchRole('visitor'); setRoleDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-[#f3f3ef] ${role === 'visitor' ? 'text-[#128C7E] font-bold bg-[#d4f0e1]/40' : 'text-[#2d4a2d]'}`}
-                  >
-                    Visitor Mode
-                  </button>
-                  <button
-                    onClick={() => { switchRole('student'); setRoleDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-[#f3f3ef] ${role === 'student' ? 'text-[#128C7E] font-bold bg-[#d4f0e1]/40' : 'text-[#2d4a2d]'}`}
-                  >
-                    Student Mode
-                  </button>
-                  <button
-                    onClick={() => { switchRole('institute'); setRoleDropdownOpen(false); }}
-                    className={`w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-[#f3f3ef] ${role === 'institute' ? 'text-[#128C7E] font-bold bg-[#d4f0e1]/40' : 'text-[#2d4a2d]'}`}
-                  >
-                    Institute Mode
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-2">
             
-            {/* PUBLIC NAVIGATION */}
-            <Link
-              to="/explore"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                isActive('/explore') ? 'bg-[#d4f0e1] text-[#128C7E] font-semibold border border-[#25D366]/40' : 'text-[#2d4a2d] hover:text-[#0f1a0f] hover:bg-[#f3f3ef]'
-              }`}
-            >
-              <Search className="w-4 h-4 text-[#128C7E]" />
-              Explore Institutes
-            </Link>
-
-            <Link
-              to="/student/compare"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                isActive('/student/compare') ? 'bg-[#d4f0e1] text-[#128C7E] font-semibold border border-[#25D366]/40' : 'text-[#2d4a2d] hover:text-[#0f1a0f] hover:bg-[#f3f3ef]'
-              }`}
-            >
-              <Scale className="w-4 h-4 text-[#128C7E]" />
-              Compare
-              {compareList.length > 0 && (
-                <span className="ml-1 bg-[#d4f0e1] text-[#128C7E] text-xs px-1.5 py-0.5 rounded-full font-bold">
-                  {compareList.length}
-                </span>
-              )}
-            </Link>
-
+            {/* PUBLIC BASE NAVIGATION */}
             <Link
               to="/how-it-works"
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -136,9 +68,34 @@ export const Navbar: React.FC = () => {
               How It Works
             </Link>
 
-            {/* ROLE SPECIFIC DASHBOARD LINKS */}
-            {role === 'student' && (
+            {/* REGISTERED STUDENT NAVIGATION */}
+            {isAuthenticated && role === 'student' && (
               <>
+                <Link
+                  to="/explore"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    isActive('/explore') ? 'bg-[#d4f0e1] text-[#128C7E] font-semibold border border-[#25D366]/40' : 'text-[#2d4a2d] hover:text-[#0f1a0f] hover:bg-[#f3f3ef]'
+                  }`}
+                >
+                  <Search className="w-4 h-4 text-[#128C7E]" />
+                  Explore Institutes
+                </Link>
+
+                <Link
+                  to="/student/compare"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    isActive('/student/compare') ? 'bg-[#d4f0e1] text-[#128C7E] font-semibold border border-[#25D366]/40' : 'text-[#2d4a2d] hover:text-[#0f1a0f] hover:bg-[#f3f3ef]'
+                  }`}
+                >
+                  <Scale className="w-4 h-4 text-[#128C7E]" />
+                  Compare
+                  {compareList.length > 0 && (
+                    <span className="ml-1 bg-[#d4f0e1] text-[#128C7E] text-xs px-1.5 py-0.5 rounded-full font-bold">
+                      {compareList.length}
+                    </span>
+                  )}
+                </Link>
+
                 <Link
                   to="/student/shortlist"
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
@@ -164,7 +121,8 @@ export const Navbar: React.FC = () => {
               </>
             )}
 
-            {role === 'institute' && (
+            {/* REGISTERED INSTITUTE NAVIGATION */}
+            {isAuthenticated && role === 'institute' && (
               <>
                 <Link
                   to="/institute/verification"
@@ -248,31 +206,6 @@ export const Navbar: React.FC = () => {
       {/* MOBILE DRAWER NAVIGATION */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-[#e3e3df] px-4 pt-3 pb-6 space-y-3 shadow-lg">
-          {/* Mobile Role Switcher */}
-          <div className="bg-[#f3f3ef] p-3 rounded-xl border border-[#e3e3df] flex items-center justify-between">
-            <span className="text-xs font-semibold text-[#737373]">Viewing App As:</span>
-            <div className="flex gap-1">
-              <button
-                onClick={() => switchRole('visitor')}
-                className={`px-2 py-1 text-[11px] rounded-md font-medium ${role === 'visitor' ? 'bg-[#128C7E] text-white' : 'text-[#2d4a2d] hover:bg-[#ebebeb]'}`}
-              >
-                Visitor
-              </button>
-              <button
-                onClick={() => switchRole('student')}
-                className={`px-2 py-1 text-[11px] rounded-md font-medium ${role === 'student' ? 'bg-[#128C7E] text-white' : 'text-[#2d4a2d] hover:bg-[#ebebeb]'}`}
-              >
-                Student
-              </button>
-              <button
-                onClick={() => switchRole('institute')}
-                className={`px-2 py-1 text-[11px] rounded-md font-medium ${role === 'institute' ? 'bg-[#128C7E] text-white' : 'text-[#2d4a2d] hover:bg-[#ebebeb]'}`}
-              >
-                Institute
-              </button>
-            </div>
-          </div>
-
           <div className="space-y-1">
             <Link
               to="/"
@@ -282,20 +215,6 @@ export const Navbar: React.FC = () => {
               Home Page
             </Link>
             <Link
-              to="/explore"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-medium text-[#0f1a0f] hover:bg-[#f3f3ef]"
-            >
-              Explore Coaching Institutes
-            </Link>
-            <Link
-              to="/student/compare"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-medium text-[#0f1a0f] hover:bg-[#f3f3ef]"
-            >
-              Compare Institutes ({compareList.length})
-            </Link>
-            <Link
               to="/how-it-works"
               onClick={() => setMobileMenuOpen(false)}
               className="block px-3 py-2 rounded-lg text-base font-medium text-[#0f1a0f] hover:bg-[#f3f3ef]"
@@ -303,8 +222,22 @@ export const Navbar: React.FC = () => {
               How It Works & Trust Model
             </Link>
 
-            {role === 'student' && (
+            {isAuthenticated && role === 'student' && (
               <>
+                <Link
+                  to="/explore"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-base font-medium text-[#0f1a0f] hover:bg-[#f3f3ef]"
+                >
+                  Explore Coaching Institutes
+                </Link>
+                <Link
+                  to="/student/compare"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2 rounded-lg text-base font-medium text-[#0f1a0f] hover:bg-[#f3f3ef]"
+                >
+                  Compare Institutes ({compareList.length})
+                </Link>
                 <Link
                   to="/student/shortlist"
                   onClick={() => setMobileMenuOpen(false)}
@@ -322,7 +255,7 @@ export const Navbar: React.FC = () => {
               </>
             )}
 
-            {role === 'institute' && (
+            {isAuthenticated && role === 'institute' && (
               <>
                 <Link
                   to="/institute/dashboard"

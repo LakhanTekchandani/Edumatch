@@ -5,6 +5,7 @@ import { AppProvider } from './context/AppContext';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { ToastContainer } from './components/common/Toast';
+import { MandatoryRegisterModal } from './components/auth/MandatoryRegisterModal';
 
 // Public Pages
 import { LandingPage } from './pages/public/LandingPage';
@@ -159,6 +160,7 @@ export function App() {
             </main>
             <Footer />
             <ToastContainer />
+            <MandatoryRegisterModal />
           </div>
         </Router>
       </AppProvider>

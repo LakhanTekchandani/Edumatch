@@ -15,6 +15,8 @@ import {
   Star
 } from 'lucide-react';
 
+const SOFT_PASTEL = ['#f0b4c0', '#c0b0e0', '#a8c8e8', '#a8d8c0', '#e8e0a0', '#e8c0a0'];
+
 export const LandingPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -39,12 +41,9 @@ export const LandingPage: React.FC = () => {
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-[#e3e3df]">
         
         {/* Originkit Xylophone Helix Background Component */}
-        <div className="absolute inset-0 z-0 opacity-25 mix-blend-multiply pointer-events-auto">
-          <XylophoneHelix />
+        <div className="absolute inset-0 z-0 pointer-events-auto opacity-20">
+          <XylophoneHelix background="#fafaf7" baseColor="#ffffffff" hover={{ colors: SOFT_PASTEL, strength: 80, tint: 70, glow: 15 }} />
         </div>
-
-        {/* Ambient Warm Gradients Overlay for Content Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#fafaf7]/85 via-[#fafaf7]/75 to-[#fafaf7] pointer-events-none z-10" />
 
         <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center space-y-8">
           
@@ -63,8 +62,7 @@ export const LandingPage: React.FC = () => {
           </h1>
 
           <p className="text-base sm:text-lg text-[#4a554a] max-w-2xl mx-auto leading-relaxed">
-            Choosing the wrong coaching institute costs students valuable years. EduMatch connects aspirants with authentic, OTP-verified student reviews and transparent comparison tools.
-          </p>
+               “Most students choose coaching institutes based on advertisements and word of mouth. EduMatch brings institute information and verified student experiences into one place, helping you make an informed decision before you enrol.”          </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">

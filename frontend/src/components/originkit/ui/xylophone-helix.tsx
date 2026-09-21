@@ -91,7 +91,7 @@ function decodeBarMesh(): BarMesh {
 }
 
 const RING = {
-    spacing: 2.2,
+    spacing: 3.2,
 
     pitch: 0.62,
 
@@ -107,7 +107,7 @@ const SCROLL = { sensitivity: 0.005, lerp: 5 } as const
 
 const SPIN_AT_FIFTY = 0.4
 
-const CAMERA_FOV_DEG = 32
+const CAMERA_FOV_DEG = 40
 
 const CAMERA_DISTANCE = 5
 
@@ -134,7 +134,7 @@ const BACKDROP_SCALE = 0.25
 
 const MAX_DELTA = 1 / 20
 
-const MAX_SCROLL_PER_EVENT = 200
+const MAX_SCROLL_PER_EVENT = 150
 const DRAG_AXIS_LOCK_PX = 8
 const DRAG_SCALE = 3
 
@@ -169,11 +169,7 @@ uniform vec3 u_color;
 varying vec2 vUv;
 ${SRGB_GLSL}
 void main() {
-    float t = smoothstep(0.0, 1.0, vUv.y * 0.5 + (1.0 - vUv.x) * 0.5);
-    vec3 floorColor = u_color * 0.35;
-    vec3 topColor = min(u_color * 1.9, vec3(1.0));
-    vec3 color = mix(floorColor, topColor, t);
-    gl_FragColor = vec4(linearToSrgb(color), 1.0);
+    gl_FragColor = vec4(linearToSrgb(u_color), 1.0);
 }
 `
 
@@ -276,6 +272,8 @@ uniform vec3 u_baseColor;
 uniform float u_reflectStrength;
 uniform float u_polish;
 uniform float u_fresnelPower;
+// 1.0 when fluid sim is running, 0.0 when EXT_color_buffer_float unavailable
+uniform float u_fluidEnabled;
 
 varying vec3 vNormal;
 varying vec3 vWorldPos;
@@ -287,7 +285,7 @@ const vec3 KEY_DIR = vec3(0.35, 1.0, 0.45);
 
 const float STRIP_Y = 0.68;
 
-const float FLUID_GATE_MAX = 0.08;
+const float FLUID_GATE_MAX = 0.02;
 const float BODY_AMBIENT = 0.10;
 const float BODY_SKY = 0.30;
 const float RIM_LIFT = 0.35;
@@ -300,6 +298,9 @@ const float SCREEN_ENV_MIX = 0.3;
 const float WAKE_ENV_GAIN = 0.9;
 
 const float BRUSH = 0.55 * 0.85;
+
+// Ambient reveal used when fluid is disabled — 0.0 so default state has no color.
+const float STATIC_REVEAL = 0.0;
 
 ${SRGB_GLSL}
 
@@ -334,11 +335,16 @@ void main() {
     vec3 screenEnv = srgbToLinear(texture2D(u_tBackdrop, euv).rgb);
     vec3 env = mix(studioEnv(R, u_polish), screenEnv, SCREEN_ENV_MIX);
 
+    // When fluid sim is active use velocity-gated reveal; otherwise use a
+    // static ambient reveal so hover colours are visible.
     float velocity = smoothstep(0.0, FLUID_GATE_MAX, length(texture2D(u_tFluid, vScreenUv).xy));
-    float reveal = clamp(velocity * u_fluidStrength, 0.0, 1.0);
+    float fluidReveal  = clamp(velocity * u_fluidStrength, 0.0, 1.0);
+    float staticReveal = STATIC_REVEAL * u_fluidStrength;
+    float reveal = mix(staticReveal, fluidReveal, u_fluidEnabled);
+
     vec3 tint = srgbToLinear(texture2D(u_tGradient, vec2(clamp(vTintU, 0.0, 1.0), 0.5)).rgb);
 
-    vec3 albedo = mix(u_baseColor, tint, reveal * u_tintStrength);
+    vec3 albedo = mix(u_baseColor, tint, clamp(reveal * u_tintStrength, 0.0, 1.0));
     env *= 1.0 + reveal * u_tintStrength * WAKE_ENV_GAIN;
 
     vec3 body = albedo * (BODY_AMBIENT + BODY_SKY * (Nb.y * 0.5 + 0.5));
@@ -348,7 +354,7 @@ void main() {
     color = mix(color, env, fres * FRESNEL_ENV * u_reflectStrength);
     color += fres * RIM_LIFT * albedo;
 
-    color += tint * reveal * u_tintGlow;
+    color += tint * reveal * u_tintGlow * 2.5;
 
     gl_FragColor = vec4(linearToSrgb(color), 1.0);
 }
@@ -1119,13 +1125,14 @@ function createRampTexture(gl: WebGL2RenderingContext): WebGLTexture {
     gl.bindTexture(gl.TEXTURE_2D, texture)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
     return texture
 }
 
 function buildRampBytes(colors: string[]): Uint8Array {
-    const source = colors.length > 0 ? colors : HOVER_COLOR_DEFAULTS
+    const rawSource = colors.length > 0 ? colors : HOVER_COLOR_RAINBOW
+    const source = rawSource.length > 1 ? [...rawSource, rawSource[0]] : rawSource
     const encode = (c: number) => {
         const v = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055
         return Math.max(0, Math.min(255, Math.round(v * 255)))
@@ -1139,11 +1146,11 @@ function buildRampBytes(colors: string[]): Uint8Array {
     const n = stops.length
     const bytes = new Uint8Array(RAMP_WIDTH * 4)
     for (let i = 0; i < RAMP_WIDTH; i++) {
-        const t = (i / (RAMP_WIDTH - 1)) * n
-        const k = Math.min(n - 1, Math.floor(t))
+        const t = (i / (RAMP_WIDTH - 1)) * (n - 1)
+        const k = Math.min(n - 2, Math.floor(t))
         const f = t - k
         const a = stops[k]
-        const b = stops[(k + 1) % n]
+        const b = stops[k + 1]
         bytes[i * 4] = a[0] + (b[0] - a[0]) * f
         bytes[i * 4 + 1] = a[1] + (b[1] - a[1]) * f
         bytes[i * 4 + 2] = a[2] + (b[2] - a[2]) * f
@@ -1294,8 +1301,17 @@ export const HOVER_COLOR_RAINBOW = [
     "#9900ff",
 ]
 
+export const HOVER_COLOR_PASTEL = [
+    "#fd054bff",
+    "#6904f8ff",
+    "#0090feff",
+    "#00ff99ff",
+    "#ffd500ff",
+    "#ff6b01ff",
+]
+
 export const HOVER_DEFAULTS: Required<HoverProps> = {
-    colors: HOVER_COLOR_DEFAULTS,
+    colors: HOVER_COLOR_PASTEL,
     strength: 100,
     tint: 100,
     glow: 30,
@@ -1304,10 +1320,10 @@ export const HOVER_DEFAULTS: Required<HoverProps> = {
 export const CAMERA_DEFAULTS: Required<CameraProps> = { tilt: 47, sideTilt: 0 }
 
 export const BASE_COLOR_DEFAULT = "#c4c7ce"
-const BASE_COLOR_FALLBACK_LINEAR: [number, number, number] = [0.55, 0.57, 0.62]
+const BASE_COLOR_FALLBACK_LINEAR: [number, number, number] = [0.75, 0.77, 0.80]
 
-export const BACKGROUND_DEFAULT = "#000000"
-const BACKGROUND_FALLBACK_LINEAR: [number, number, number] = [0, 0, 0]
+export const BACKGROUND_DEFAULT = "#fafaf7"
+const BACKGROUND_FALLBACK_LINEAR: [number, number, number] = [0.96, 0.96, 0.94]
 
 export const XYLOPHONE_HELIX_DEFAULTS = {
     background: BACKGROUND_DEFAULT,
@@ -1444,6 +1460,7 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
                 "u_reflectStrength",
                 "u_polish",
                 "u_fresnelPower",
+                "u_fluidEnabled",
             ],
             ["aVertexPosition", "aVertexNormal", "aPos", "aRot", "aTintOffset", "aStrikeTime"]
         )
@@ -1702,6 +1719,10 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
             pointerId: -1,
         }
 
+        let hoverFade = 0
+        const HOVER_FADE_IN_SPEED = 5.0
+        const HOVER_FADE_OUT_SPEED = 3.0
+
         const addSpin = (dxClient: number) => {
             if (gesture.width <= 0) return
             input.deltaSpinX += dxClient / gesture.width
@@ -1859,6 +1880,7 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
             if (input.hasPointer) {
                 point.x = input.screenX
                 point.y = input.screenY
+                lastUserInput = time
             } else {
                 point.x = 0.5 + Math.cos(autoplayAngle) * AUTOPLAY_RADIUS
                 point.y = 0.5 + Math.sin(autoplayAngle) * AUTOPLAY_RADIUS
@@ -1869,27 +1891,41 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
             const dx = point.x - point.prevX
             const dy = point.y - point.prevY
             const dist = Math.hypot(dx, dy)
-            point.velocity = Math.min(1, point.velocity + dist * 2)
 
-            if (dist > 0) {
-                if (dist > 0.001) lastUserInput = time
+            const isPointerActive = input.hasPointer
+            const hasMoved = dist > 0.0001
+
+            if (isPointerActive || hasMoved || !input.hasPointer) {
+                if (isPointerActive) lastUserInput = time
 
                 const newLine = time - point.lastSplat > 0.15
                 const aspect = viewHeight > 0 ? viewWidth / viewHeight : 1
-                const force = newLine ? 0 : FLUID.splatForce
+
+                let dirX = dx
+                let dirY = dy
+                let speed = dist
+
+                if (isPointerActive && speed < 0.001) {
+                    const angle = time * 4.0
+                    dirX = Math.cos(angle) * 0.008
+                    dirY = Math.sin(angle) * 0.008
+                    speed = 0.008
+                }
+
+                point.velocity = Math.min(1, point.velocity + speed * 4)
+
+                const force = FLUID.splatForce
+                const prevX = newLine ? point.x : point.prevX
+                const prevY = newLine ? point.y : point.prevY
 
                 const program = fluidPrograms.splat
                 gl.useProgram(program.program)
                 gl.uniform2f(program.uniforms.u_texelSize, texel, texel)
                 gl.uniform1f(program.uniforms.u_aspectRatio, aspect)
                 gl.uniform2f(program.uniforms.u_splatPosition, point.x, point.y)
-                gl.uniform2f(
-                    program.uniforms.u_prevPoint,
-                    newLine ? point.x : point.prevX,
-                    newLine ? point.y : point.prevY
-                )
-                gl.uniform3f(program.uniforms.u_splatColor, dx * aspect * force, dy * force, 0)
-                gl.uniform1f(program.uniforms.u_splatRadius, FLUID.splatRadius * point.velocity)
+                gl.uniform2f(program.uniforms.u_prevPoint, prevX, prevY)
+                gl.uniform3f(program.uniforms.u_splatColor, dirX * aspect * force, dirY * force, 0)
+                gl.uniform1f(program.uniforms.u_splatRadius, FLUID.splatRadius * Math.max(0.6, point.velocity))
 
                 gl.activeTexture(gl.TEXTURE0)
                 gl.bindTexture(gl.TEXTURE_2D, velocity[velocityRead].texture)
@@ -1905,7 +1941,7 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
             point.lastUpdate = time
             point.prevX = point.x
             point.prevY = point.y
-            point.velocity *= 0.9
+            point.velocity *= 0.94
             point.velocity = Math.min(1, point.velocity)
         }
 
@@ -2121,6 +2157,11 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
 
             const spinSpeed = reduceMotion ? 0 : live.current.spinSpeed
 
+            const fadeTarget = input.hasPointer ? 1 : 0
+            const fadeRate = input.hasPointer ? HOVER_FADE_IN_SPEED : HOVER_FADE_OUT_SPEED
+            hoverFade += (fadeTarget - hoverFade) * (1 - Math.exp(-fadeRate * delta))
+            if (Math.abs(hoverFade - fadeTarget) < 0.001) hoverFade = fadeTarget
+
             updateScroll(delta, spinSpeed)
 
             const frameAspect = viewHeight > 0 ? viewWidth / viewHeight : 1
@@ -2174,7 +2215,7 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
             gl.uniform1f(u.u_swingScale, reduceMotion ? 0 : 1)
             gl.uniform3f(u.u_swingAxis, 0, 1, 0)
             gl.uniform3f(u.u_cameraPos, 0, 0, CAMERA_DISTANCE)
-            gl.uniform1f(u.u_fluidStrength, live.current.fluidStrength)
+            gl.uniform1f(u.u_fluidStrength, live.current.fluidStrength * hoverFade)
             gl.uniform1f(u.u_tintStrength, live.current.tintStrength)
             gl.uniform1f(u.u_tintGlow, live.current.tintGlow)
             const [baseR, baseG, baseB] = live.current.baseColorLinear
@@ -2182,6 +2223,7 @@ export default function XylophoneHelix(props: XylophoneHelixProps) {
             gl.uniform1f(u.u_reflectStrength, live.current.reflect)
             gl.uniform1f(u.u_polish, live.current.polish)
             gl.uniform1f(u.u_fresnelPower, FRESNEL_POWER)
+            gl.uniform1f(u.u_fluidEnabled, fluidEnabled ? 1.0 : 0.0)
 
             gl.activeTexture(gl.TEXTURE0)
             gl.bindTexture(gl.TEXTURE_2D, velocity ? velocity[velocityRead].texture : emptyTexture)
