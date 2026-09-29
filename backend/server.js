@@ -1,17 +1,24 @@
-const express = require('express')
+require("dotenv").config();
 
-const app = express()
+const dns = require("dns");
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
+
+const express = require("express");
+const connectDB = require("./config/db");
+
+const app = express();
+
 app.use(express.json());
 
-
+connectDB();
 
 const port = 5000;
 
-app.get("/",(req, res)=>{
+app.get("/", (req, res) => {
     res.json({
-        message:"Edumatch APi is working "
-    })
-})
+        message: "Edumatch API is working"
+    });
+});
 
 app.listen(port, () => {
     console.log(`Edumatch backend is live ${port}`);
